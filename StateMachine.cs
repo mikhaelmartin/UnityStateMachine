@@ -1,39 +1,38 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
-namespace StateMachine
+namespace FiniteStateMachine
 {
     internal sealed class AnyState { }
 
-    internal interface IState<T>
+    internal abstract class FiniteState<T>
     {
-        internal HashSet<Type> PreviousStateTypes { get; }
-        internal void OnStateEnter(T owner);
-        internal void OnStateExit(T owner);
-        internal void OnStateUpdate(T owner, float deltaTime);
-        internal void OnStateFixedUpdate(T owner, float fixedDeltaTime);
-    }
-
-    internal interface ICollision<T, TCollision>
-    {
-        internal void OnCollisionEnter(T owner, TCollision other);
-        internal void OnCollisionStay(T owner, TCollision other);
-        internal void OnCollisionExit(T owner, TCollision other);
-    }
-
-    internal interface ITrigger<T, TTrigger>
-    {
-        internal void OnTriggerEnter(T owner, TTrigger other);
-        internal void OnTriggerStay(T owner, TTrigger other);
-        internal void OnTriggerExit(T owner, TTrigger other);
+        internal abstract HashSet<Type> PreviousStateTypes { get; }
+        internal virtual void OnStateEnter(T owner) { }
+        internal virtual void OnStateExit(T owner) { }
+        internal virtual void OnUpdate(T owner, float deltaTime) { }
+        internal virtual void OnFixedUpdate(T owner, float fixedDeltaTime) { }
+        internal virtual void OnCollisionEnter(T owner, Collision other) { }
+        internal virtual void OnCollisionStay(T owner, Collision other) { }
+        internal virtual void OnCollisionExit(T owner, Collision other) { }
+        internal virtual void OnTriggerEnter(T owner, Collider other) { }
+        internal virtual void OnTriggerStay(T owner, Collider other) { }
+        internal virtual void OnTriggerExit(T owner, Collider other) { }
+        internal virtual void OnCollisionEnter2D(T owner, Collision2D other) { }
+        internal virtual void OnCollisionStay2D(T owner, Collision2D other) { }
+        internal virtual void OnCollisionExit2D(T owner, Collision2D other) { }
+        internal virtual void OnTriggerEnter2D(T owner, Collider2D other) { }
+        internal virtual void OnTriggerStay2D(T owner, Collider2D other) { }
+        internal virtual void OnTriggerExit2D(T owner, Collider2D other) { }
     }
 
     internal class StateEventArgs<T> : EventArgs
     {
         internal T Owner { get; }
-        internal IState<T> PreviousState { get; }
-        internal IState<T> CurrentState { get; }
-        public StateEventArgs(T owner, IState<T> previousState, IState<T> currentState)
+        internal FiniteState<T> PreviousState { get; }
+        internal FiniteState<T> CurrentState { get; }
+        public StateEventArgs(T owner, FiniteState<T> previousState, FiniteState<T> currentState)
         {
             Owner = owner;
             PreviousState = previousState;
@@ -44,33 +43,20 @@ namespace StateMachine
     internal class StateMachine<T>
     {
         private T owner;
-        private IState<T> previousState;
-        private IState<T> currentState;
-
+        private FiniteState<T> previousState;
+        private FiniteState<T> currentState;
         internal event EventHandler<StateEventArgs<T>> StateChanged;
-        protected virtual void OnStateChanged(StateEventArgs<T> e)
-        {
-            StateChanged?.Invoke(this, e);
-        }
-
-        internal IState<T> CurrentState
-        {
-            get => currentState;
-        }
-
-        internal IState<T> PreviousState
-        {
-            get => previousState;
-        }
-
-        internal StateMachine(T owner, IState<T> initialState)
+        protected virtual void OnStateChanged(StateEventArgs<T> e) { StateChanged?.Invoke(this, e); }
+        internal FiniteState<T> CurrentState { get => currentState; }
+        internal FiniteState<T> PreviousState { get => previousState; }
+        internal StateMachine(T owner, FiniteState<T> initialState)
         {
             this.owner = owner;
             this.currentState = initialState;
             this.currentState.OnStateEnter(owner);
         }
 
-        internal void ChangeState(IState<T> newState)
+        internal void ChangeState(FiniteState<T> newState)
         {
             if (this.currentState.GetType() != newState.GetType())
             {
@@ -88,14 +74,19 @@ namespace StateMachine
             }
         }
 
-        internal void Update(float deltaTime)
-        {
-            this.currentState.OnStateUpdate(owner, deltaTime);
-        }
-
-        internal void FixedUpdate(float fixedDeltaTime)
-        {
-            this.currentState.OnStateFixedUpdate(owner, fixedDeltaTime);
-        }
+        internal void Update(float deltaTime) { currentState.OnUpdate(owner, deltaTime); }
+        internal void FixedUpdate(float fixedDeltaTime) { currentState.OnFixedUpdate(owner, fixedDeltaTime); }
+        internal void OnCollisionEnter(Collision other) { currentState.OnCollisionEnter(owner, other); }
+        internal void OnCollisionStay(Collision other) { currentState.OnCollisionStay(owner, other); }
+        internal void OnCollisionExit(Collision other) { currentState.OnCollisionExit(owner, other); }
+        internal void OnTriggerEnter(Collider other) { currentState.OnTriggerEnter(owner, other); }
+        internal void OnTriggerStay(Collider other) { currentState.OnTriggerStay(owner, other); }
+        internal void OnTriggerExit(Collider other) { currentState.OnTriggerExit(owner, other); }
+        internal void OnCollisionEnter2D(Collision2D other) { currentState.OnCollisionEnter2D(owner, other); }
+        internal void OnCollisionStay2D(Collision2D other) { currentState.OnCollisionStay2D(owner, other); }
+        internal void OnCollisionExit2D(Collision2D other) { currentState.OnCollisionExit2D(owner, other); }
+        internal void OnTriggerEnter2D(Collider2D other) { currentState.OnTriggerEnter2D(owner, other); }
+        internal void OnTriggerStay2D(Collider2D other) { currentState.OnTriggerStay2D(owner, other); }
+        internal void OnTriggerExit2D(Collider2D other) { currentState.OnTriggerExit2D(owner, other); }
     }
 }
